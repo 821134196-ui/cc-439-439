@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>医院陪护床位与消毒交接系统</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">＋</span>
+    <div>
+      <h1>陪护床位与消毒交接</h1>
+      <p class="subtitle">病区 · 床位 · 时段 · 押金 · 床品 · 消毒 · 维修 · 归还核验</p>
+    </div>
+  </div>
+  <div class="nurse-picker">
+    <label>当前执行人</label>
+    <select id="nurseSelect"></select>
+    <span id="nurseWard" class="ward-chip"></span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-view="bedmap" class="tab active">病区床位图</button>
+  <button data-view="queue" class="tab">申请队列</button>
+  <button data-view="timeline" class="tab">使用时间线</button>
+  <button data-view="return" class="tab">归还核验</button>
+  <button data-view="batch" class="tab">消毒批次</button>
+  <button data-view="deposit" class="tab">押金结算</button>
+</nav>
+
+<main class="content">
+  <!-- 病区床位图 -->
+  <section id="view-bedmap" class="view active">
+    <div class="legend">
+      <span><i class="dot clean"></i>已清洁可分配</span>
+      <span><i class="dot dirty"></i>待清洁</span>
+      <span><i class="dot isolated"></i>污染隔离</span>
+      <span><i class="dot occupied"></i>使用中</span>
+      <span><i class="dot maintenance"></i>维修中</span>
+      <span class="muted">床位卡同时呈现清洁 / 占用 / 维修三种状态</span>
+    </div>
+    <div id="bedmap" class="ward-grid"></div>
+    <h2 class="section-title">近期异常记录</h2>
+    <div id="exceptionList" class="exception-list"></div>
+  </section>
+
+  <!-- 申请队列 -->
+  <section id="view-queue" class="view">
+    <div id="queueList" class="card-list"></div>
+  </section>
+
+  <!-- 使用时间线 -->
+  <section id="view-timeline" class="view">
+    <div id="timelineList" class="card-list"></div>
+  </section>
+
+  <!-- 归还核验 -->
+  <section id="view-return" class="view">
+    <div id="returnList" class="card-list"></div>
+  </section>
+
+  <!-- 消毒批次 -->
+  <section id="view-batch" class="view">
+    <h2 class="section-title">待消毒床位（创建批次）</h2>
+    <div id="pendingBeds" class="card-list"></div>
+    <h2 class="section-title">消毒批次记录</h2>
+    <div id="batchList" class="card-list"></div>
+  </section>
+
+  <!-- 押金结算 -->
+  <section id="view-deposit" class="view">
+    <div id="depositList" class="card-list"></div>
+    <h2 class="section-title">病区调拨记录（数量 · 责任人）</h2>
+    <div id="transferList" class="card-list"></div>
+  </section>
+</main>
+
+<!-- 归还核验弹窗 -->
+<div id="returnModal" class="modal hidden">
+  <div class="modal-box modal-wide">
+    <div class="modal-head">
+      <h3>归还核验 · <span id="rmOrderCode"></span></h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button>
+    </div>
+    <p class="muted">床架 / 床垫 / 床品 / 配件四列固定核对；异常项必须填写处理原因。</p>
+    <div class="return-columns" id="rmColumns"></div>
+    <div class="modal-foot">
+      <label class="photo-pick">
+        交接照片（可选）
+        <input type="file" id="rmPhoto" accept="image/*">
+      </label>
+      <span id="rmPhotoHint" class="muted"></span>
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn primary" id="rmSubmit">提交核验并释放床位</button>
+    </div>
+  </div>
+</div>
+
+<!-- 结算弹窗 -->
+<div id="settleModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head"><h3>押金结算</h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div id="smSummary"></div>
+    <label class="form-row">扣减金额（元）
+      <input type="number" id="smDeduct" min="0" step="0.01" value="0">
+    </label>
+    <label class="form-row">扣减原因（缺失/损坏/超时）
+      <input type="text" id="smReason" placeholder="如：呼叫器缺失">
+    </label>
+    <p class="warn">结算后订单锁定，迟到归还不能重开。</p>
+    <div class="modal-foot">
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn primary" id="smSubmit">确认结算</button>
+    </div>
+  </div>
+</div>
+
+<!-- 换床弹窗 -->
+<div id="swapModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head"><h3>临时换床</h3>
+      <button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <label class="form-row">换至床位
+      <select id="swapBed"></select></label>
+    <label class="form-row">换床原因
+      <input type="text" id="swapReason" placeholder="如：床架异响/家属申请"></label>
+    <div class="modal-foot">
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn primary" id="swapSubmit">确认换床</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
