@@ -1,0 +1,15 @@
+{
+  "name": "ward-care-bed-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "医院陪护床位与消毒交接系统（零依赖：node:sqlite + 内置 HTTP）",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node --no-warnings src/server.js",
+    "seed": "node --no-warnings src/seed.js --reset",
+    "test": "node --no-warnings --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}
